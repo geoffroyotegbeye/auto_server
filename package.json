@@ -1,0 +1,36 @@
+{
+  "name": "vehiclemarket-backend",
+  "version": "1.0.0",
+  "description": "Backend API pour VehicleMarket - Gestion véhicules, RDV, devis et SAV",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "db:migrate": "node src/database/migrate-all.js",
+    "db:seed": "node src/database/seed-all.js",
+    "db:reset": "node src/database/migrate-all.js && node src/database/seed-all.js",
+    "db:check": "node src/database/check-tables.js",
+    "db:migrate-users": "node src/database/migrate-users.js"
+  },
+  "keywords": ["vehiclemarket", "api", "express", "mysql"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.6.5",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.7",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
