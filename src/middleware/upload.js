@@ -98,7 +98,7 @@ export const uploadConfig = multer({
   storage: configStorage,
   limits: {
     fileSize: 2 * 1024 * 1024, // 2MB
-    files: 1
+    files: 2 // Permettre 2 fichiers (logo + logo_dark)
   },
   fileFilter: fileFilter
 });

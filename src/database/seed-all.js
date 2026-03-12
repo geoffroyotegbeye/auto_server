@@ -10,9 +10,9 @@ async function seedAll() {
     const hashedPassword = await bcrypt.hash('Admin123!', 10);
     await pool.query(
       'INSERT INTO users (email, password, name, role, is_active) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE id=id',
-      ['admin@vehiclemarket.com', hashedPassword, 'Administrateur', 'admin', true]
+      ['admin@migmotors.com', hashedPassword, 'Administrateur MigMotors', 'admin', true]
     );
-    console.log('✅ Admin créé : admin@vehiclemarket.com / Admin123!');
+    console.log('✅ Admin créé : admin@migmotors.com / Admin123!');
 
     // 2. Insérer les marques
     console.log('\n🏷️  Insertion des marques...');
@@ -413,7 +413,7 @@ async function seedAll() {
     console.log('   ✅ 6 services SAV');
     console.log('   ✅ 3 avis clients');
     console.log('\n🔐 Compte admin:');
-    console.log('   Email: admin@vehiclemarket.com');
+    console.log('   Email: admin@migmotors.com');
     console.log('   Mot de passe: Admin123!');
     
     process.exit(0);
