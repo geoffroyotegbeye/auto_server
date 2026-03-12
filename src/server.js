@@ -23,6 +23,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy - Important pour Railway et autres plateformes cloud
+app.set('trust proxy', 1);
+
 // Middlewares de sécurité
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
