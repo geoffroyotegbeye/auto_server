@@ -4,16 +4,18 @@ import { sanitizeUpdateData } from '../utils/sanitize.js';
 
 export const getAllServices = async (req, res) => {
   try {
-    const { category, is_active = true } = req.query;
-    let query = 'SELECT * FROM services WHERE is_active = ?';
-    const params = [is_active];
+    const { category } = req.query;
+    let query = 'SELECT * FROM services';
+    const params = [];
+    const conditions = [];
 
     if (category) {
-      query += ' AND category = ?';
+      conditions.push('category = ?');
       params.push(category);
     }
 
-    query += ' ORDER BY display_order ASC, name ASC';
+    if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
+    query += ' ORDER BY name ASC';
 
     const [services] = await pool.query(query, params);
     res.json(services);

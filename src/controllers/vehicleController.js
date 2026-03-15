@@ -119,7 +119,6 @@ export const createVehicle = async (req, res) => {
     // Convertir les valeurs numériques (FormData envoie tout en string)
     if (vehicleData.price) vehicleData.price = parseFloat(vehicleData.price);
     if (vehicleData.year) vehicleData.year = parseInt(vehicleData.year);
-    if (vehicleData.km) vehicleData.km = parseInt(vehicleData.km);
     if (vehicleData.doors) vehicleData.doors = parseInt(vehicleData.doors);
     if (vehicleData.seats) vehicleData.seats = parseInt(vehicleData.seats);
     

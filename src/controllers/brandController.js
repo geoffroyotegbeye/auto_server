@@ -12,7 +12,7 @@ export const getAllBrands = async (req, res) => {
       query += ' WHERE is_active = TRUE';
     }
 
-    query += ' ORDER BY display_order ASC, name ASC';
+    query += ' ORDER BY name ASC';
 
     const [brands] = await pool.query(query, params);
     res.json(brands);
@@ -52,6 +52,8 @@ export const createBrand = async (req, res) => {
       brandData.logo = `/uploads/brands/${req.file.filename}`;
     }
 
+    if (brandData.is_active !== undefined) brandData.is_active = brandData.is_active === 'true' || brandData.is_active === true ? 1 : 0;
+
     const [result] = await pool.query('INSERT INTO brands SET ?', brandData);
 
     res.status(201).json({
@@ -76,6 +78,8 @@ export const updateBrand = async (req, res) => {
     if (req.file) {
       brandData.logo = `/uploads/brands/${req.file.filename}`;
     }
+
+    if (brandData.is_active !== undefined) brandData.is_active = brandData.is_active === 'true' || brandData.is_active === true ? 1 : 0;
 
     const [result] = await pool.query('UPDATE brands SET ? WHERE id = ?', [brandData, id]);
 

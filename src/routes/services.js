@@ -15,7 +15,6 @@ router.post(
   isAdmin,
   [
     body('name').notEmpty().withMessage('Nom requis'),
-    body('category').isIn(['entretien', 'reparation', 'diagnostic', 'carrosserie', 'pneumatique', 'autre']),
     body('description').notEmpty().withMessage('Description requise')
   ],
   serviceController.createService
