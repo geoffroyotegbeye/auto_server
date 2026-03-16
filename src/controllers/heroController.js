@@ -17,6 +17,11 @@ export const updateHeroSettings = async (req, res) => {
   try {
     let settingsData = sanitizeUpdateData(req.body);
 
+    // Supprimer les champs qui ne doivent pas être mis à jour
+    delete settingsData.is_active;
+    delete settingsData.created_at;
+    delete settingsData.updated_at;
+
     if (req.file) {
       const [existing] = await pool.query('SELECT main_image FROM hero_settings LIMIT 1');
       if (existing.length > 0) await deleteCloudinaryImage(existing[0].main_image);
@@ -35,7 +40,7 @@ export const updateHeroSettings = async (req, res) => {
 
     res.json({ message: 'Paramètres mis à jour avec succès' });
   } catch (error) {
-    console.error(error);
+    console.error('Hero update error:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour des paramètres' });
   }
 };
