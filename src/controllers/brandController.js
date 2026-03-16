@@ -1,20 +1,15 @@
 import { validationResult } from 'express-validator';
 import pool from '../config/database.js';
 import { sanitizeUpdateData } from '../utils/sanitize.js';
+import { deleteCloudinaryImage } from '../middleware/upload.js';
 
 export const getAllBrands = async (req, res) => {
   try {
     const { active } = req.query;
     let query = 'SELECT * FROM brands';
-    const params = [];
-
-    if (active === 'true') {
-      query += ' WHERE is_active = TRUE';
-    }
-
+    if (active === 'true') query += ' WHERE is_active = TRUE';
     query += ' ORDER BY name ASC';
-
-    const [brands] = await pool.query(query, params);
+    const [brands] = await pool.query(query);
     res.json(brands);
   } catch (error) {
     console.error(error);
@@ -26,11 +21,7 @@ export const getBrandById = async (req, res) => {
   try {
     const { id } = req.params;
     const [brands] = await pool.query('SELECT * FROM brands WHERE id = ?', [id]);
-
-    if (brands.length === 0) {
-      return res.status(404).json({ error: 'Marque non trouvée' });
-    }
-
+    if (brands.length === 0) return res.status(404).json({ error: 'Marque non trouvée' });
     res.json(brands[0]);
   } catch (error) {
     console.error(error);
@@ -40,31 +31,19 @@ export const getBrandById = async (req, res) => {
 
 export const createBrand = async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
   try {
     const brandData = req.body;
 
-    // Gérer l'upload du logo si présent
-    if (req.file) {
-      brandData.logo = `/uploads/brands/${req.file.filename}`;
-    }
-
+    if (req.file) brandData.logo = req.file.path;
     if (brandData.is_active !== undefined) brandData.is_active = brandData.is_active === 'true' || brandData.is_active === true ? 1 : 0;
 
     const [result] = await pool.query('INSERT INTO brands SET ?', brandData);
-
-    res.status(201).json({
-      message: 'Marque créée avec succès',
-      brandId: result.insertId
-    });
+    res.status(201).json({ message: 'Marque créée avec succès', brandId: result.insertId });
   } catch (error) {
     console.error(error);
-    if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ error: 'Cette marque existe déjà' });
-    }
+    if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Cette marque existe déjà' });
     res.status(500).json({ error: 'Erreur lors de la création de la marque' });
   }
 };
@@ -74,25 +53,21 @@ export const updateBrand = async (req, res) => {
     const { id } = req.params;
     let brandData = sanitizeUpdateData(req.body);
 
-    // Gérer l'upload du logo si présent
     if (req.file) {
-      brandData.logo = `/uploads/brands/${req.file.filename}`;
+      const [existing] = await pool.query('SELECT logo FROM brands WHERE id = ?', [id]);
+      if (existing.length > 0) await deleteCloudinaryImage(existing[0].logo);
+      brandData.logo = req.file.path;
     }
 
     if (brandData.is_active !== undefined) brandData.is_active = brandData.is_active === 'true' || brandData.is_active === true ? 1 : 0;
 
     const [result] = await pool.query('UPDATE brands SET ? WHERE id = ?', [brandData, id]);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Marque non trouvée' });
-    }
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Marque non trouvée' });
 
     res.json({ message: 'Marque mise à jour avec succès' });
   } catch (error) {
     console.error(error);
-    if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ error: 'Cette marque existe déjà' });
-    }
+    if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Cette marque existe déjà' });
     res.status(500).json({ error: 'Erreur lors de la mise à jour de la marque' });
   }
 };
@@ -101,20 +76,16 @@ export const deleteBrand = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Vérifier si des véhicules utilisent cette marque
     const [vehicles] = await pool.query('SELECT COUNT(*) as count FROM vehicles WHERE brand = (SELECT name FROM brands WHERE id = ?)', [id]);
-    
     if (vehicles[0].count > 0) {
-      return res.status(400).json({ 
-        error: `Impossible de supprimer cette marque car ${vehicles[0].count} véhicule(s) l'utilisent` 
-      });
+      return res.status(400).json({ error: `Impossible de supprimer cette marque car ${vehicles[0].count} véhicule(s) l'utilisent` });
     }
+
+    const [brandToDelete] = await pool.query('SELECT logo FROM brands WHERE id = ?', [id]);
+    if (brandToDelete.length > 0) await deleteCloudinaryImage(brandToDelete[0].logo);
 
     const [result] = await pool.query('DELETE FROM brands WHERE id = ?', [id]);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Marque non trouvée' });
-    }
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Marque non trouvée' });
 
     res.json({ message: 'Marque supprimée avec succès' });
   } catch (error) {

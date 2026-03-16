@@ -1,104 +1,74 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-// Créer les dossiers uploads s'ils n'existent pas
-const uploadDirs = ['uploads/vehicles', 'uploads/brands', 'uploads/hero', 'uploads/config'];
-uploadDirs.forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+// Config Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Configuration du stockage pour véhicules
-const vehicleStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/vehicles');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'vehicle-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+export { cloudinary };
 
-// Configuration du stockage pour hero
-const heroStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/hero');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'hero-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-// Configuration du stockage pour brands
-const brandStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/brands');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'brand-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-// Configuration du stockage pour config (logo)
-const configStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/config');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-// Filtrer les types de fichiers
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|webp|avif/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype) || file.mimetype === 'image/avif';
-
-  if (mimetype && extname) {
-    return cb(null, true);
-  } else {
-    cb(new Error('Seules les images (JPEG, JPG, PNG, WEBP, AVIF) sont autorisées'));
-  }
+  const allowed = /jpeg|jpg|png|webp|avif/;
+  const ext = allowed.test(file.originalname.toLowerCase());
+  const mime = allowed.test(file.mimetype) || file.mimetype === 'image/avif';
+  if (ext && mime) cb(null, true);
+  else cb(new Error('Seules les images (JPEG, JPG, PNG, WEBP, AVIF) sont autorisées'));
 };
 
+// Vehicles
 export const upload = multer({
-  storage: vehicleStorage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB par fichier
-    files: 5 // Maximum 5 fichiers
-  },
-  fileFilter: fileFilter
+  storage: new CloudinaryStorage({
+    cloudinary,
+    params: { folder: 'auto/vehicles', allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'avif'], transformation: [{ width: 1200, height: 900, crop: 'limit', quality: 'auto' }] },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024, files: 5 },
+  fileFilter,
 });
 
-export const uploadHero = multer({
-  storage: heroStorage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
-    files: 1
-  },
-  fileFilter: fileFilter
-});
-
+// Brands
 export const uploadBrand = multer({
-  storage: brandStorage,
-  limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB
-    files: 1
-  },
-  fileFilter: fileFilter
+  storage: new CloudinaryStorage({
+    cloudinary,
+    params: { folder: 'auto/brands', allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'avif'], transformation: [{ width: 400, height: 400, crop: 'limit', quality: 'auto' }] },
+  }),
+  limits: { fileSize: 2 * 1024 * 1024, files: 1 },
+  fileFilter,
 });
 
-export const uploadConfig = multer({
-  storage: configStorage,
-  limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB
-    files: 2 // Permettre 2 fichiers (logo + logo_dark)
-  },
-  fileFilter: fileFilter
+// Hero
+export const uploadHero = multer({
+  storage: new CloudinaryStorage({
+    cloudinary,
+    params: { folder: 'auto/hero', allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'avif'], transformation: [{ width: 1920, height: 1080, crop: 'limit', quality: 'auto' }] },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter,
 });
+
+// Config (logos)
+export const uploadConfig = multer({
+  storage: new CloudinaryStorage({
+    cloudinary,
+    params: { folder: 'auto/config', allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'avif'], transformation: [{ width: 400, height: 200, crop: 'limit', quality: 'auto' }] },
+  }),
+  limits: { fileSize: 2 * 1024 * 1024, files: 2 },
+  fileFilter,
+});
+
+// Helper pour supprimer une image Cloudinary depuis son URL
+export const deleteCloudinaryImage = async (imageUrl) => {
+  if (!imageUrl || !imageUrl.includes('cloudinary.com')) return;
+  try {
+    // Extraire le public_id depuis l'URL : .../auto/vehicles/abc123.jpg → auto/vehicles/abc123
+    const matches = imageUrl.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-z]+$/i);
+    if (matches && matches[1]) {
+      await cloudinary.uploader.destroy(matches[1]);
+    }
+  } catch (e) {
+    console.error('Erreur suppression Cloudinary:', e.message);
+  }
+};
