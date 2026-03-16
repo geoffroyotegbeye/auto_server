@@ -1,5 +1,5 @@
 import express from 'express';
-import { body, query, param } from 'express-validator';
+import { body } from 'express-validator';
 import { authenticateToken, isAdmin } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
 import * as vehicleController from '../controllers/vehicleController.js';
@@ -21,7 +21,6 @@ router.post(
     body('model').notEmpty().withMessage('Le modèle est requis'),
     body('price').notEmpty().withMessage('Prix requis'),
     body('year').notEmpty().withMessage('Année requise'),
-    body('km').notEmpty().withMessage('Kilométrage requis'),
     body('fuel').isIn(['Essence', 'Diesel', 'Hybride', 'Hybride rechargeable', 'Électrique', 'GPL']),
     body('transmission').notEmpty()
   ],
