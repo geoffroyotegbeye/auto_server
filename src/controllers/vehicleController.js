@@ -94,6 +94,11 @@ export const createVehicle = async (req, res) => {
       vehicleData.features = null;
     }
 
+    // Convertir booléens string → 0/1 pour TINYINT MySQL
+    if ('is_featured' in vehicleData) vehicleData.is_featured = vehicleData.is_featured === 'true' || vehicleData.is_featured === true ? 1 : 0;
+    if ('is_new' in vehicleData) vehicleData.is_new = vehicleData.is_new === 'true' || vehicleData.is_new === true ? 1 : 0;
+
+    if (vehicleData.body_style === '') delete vehicleData.body_style;
     if (vehicleData.power === '') delete vehicleData.power;
     if (vehicleData.version === '') delete vehicleData.version;
     if (vehicleData.color === '') delete vehicleData.color;
