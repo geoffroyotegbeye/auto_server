@@ -82,6 +82,7 @@ export const createVehicle = async (req, res) => {
     if (vehicleData.year) vehicleData.year = parseInt(vehicleData.year);
     if (vehicleData.doors) vehicleData.doors = parseInt(vehicleData.doors);
     if (vehicleData.seats) vehicleData.seats = parseInt(vehicleData.seats);
+    vehicleData.km = vehicleData.km ? parseInt(vehicleData.km) : 0;
 
     if (vehicleData.features) {
       if (typeof vehicleData.features === 'string' && vehicleData.features.trim() !== '') {
